@@ -197,13 +197,10 @@ async def run_issue_discovery(
 
         try:
             current_response = await asyncio.to_thread(client.get_miner_issues, evaluation.github_id)
+            open_counts = _count_open_issues(current_response.issues, enabled_names)
         except MirrorRequestError as e:
-            bt.logging.warning(f'├─ UID {uid}: open-issue count fetch failed ({e}) — skipped this miner')
-            _restore_issue_discovery_from_cache(evaluation, evaluation_cache)
-            fetch_errors += 1
-            continue
-
-        open_counts = _count_open_issues(current_response.issues, enabled_names)
+            bt.logging.warning(f'├─ UID {uid}: open-issue count fetch failed ({e}) — proceeding with empty open counts')
+            open_counts = {}
         filtered = [i for i in response.issues if i.repo_full_name in enabled_names and _should_include_issue(i)]
         if not filtered:
             _clear_issue_discovery_fields(evaluation)
